@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "https://book-review-app-1-b9ch.onrender.com/api",
 });
 
 export default API;
