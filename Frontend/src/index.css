@@ -1,0 +1,23 @@
+.app.dark {
+  background: #0b1220;
+  color: white;
+}
+
+.app.light {
+  background: #f5f6fa;
+  color: black;
+}
+
+/* Theme button */
+.theme-btn {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  background: #ff6b6b;
+  color: white;
+  z-index: 999;
+}

@@ -1,0 +1,172 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "./Explore.css";
+
+function Explore() {
+  const navigate = useNavigate();
+
+  const [booksData, setBooksData] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [search, setSearch] = useState("");
+  const [darkMode, setDarkMode] = useState(true);
+
+  const [favorites, setFavorites] = useState(
+    JSON.parse(localStorage.getItem("favorites")) || []
+  );
+
+  // Fetch Books
+useEffect(() => {
+  fetch("http://localhost:5000/api/books?limit=100")
+    .then((res) => res.json())
+   .then((data) => {
+  console.log(data);
+
+  const books = data.books || data;
+
+  console.log("Books Count:", books.length);
+
+  setBooksData(books);
+})
+    .catch((err) => {
+      console.error("Fetch Error:", err);
+    });
+}, []);
+
+  // Categories
+  const categories = [
+    "all",
+    ...new Set(
+      booksData
+        .map((book) => book.category)
+        .filter(Boolean)
+    ),
+    "favorites",
+  ];
+
+  // Favorite Save Remove
+  const saveBook = (book) => {
+    const exists = favorites.some((b) => b._id === book._id);
+
+    let updated;
+    if (exists) {
+      updated = favorites.filter((b) => b._id !== book._id);
+    } else {
+      updated = [...favorites, book];
+    }
+
+    setFavorites(updated);
+    localStorage.setItem("favorites", JSON.stringify(updated));
+  };
+
+  // Filter
+  let filteredBooks =
+    selectedCategory === "all"
+      ? booksData
+      : selectedCategory === "favorites"
+      ? favorites
+      : booksData.filter((book) => book.category === selectedCategory);
+
+  filteredBooks = filteredBooks.filter((book) => {
+    const text = search.toLowerCase();
+    return (
+      book.title?.toLowerCase().includes(text) ||
+      book.author?.toLowerCase().includes(text) ||
+      book.category?.toLowerCase().includes(text)
+    );
+  });
+
+  const favoriteIds = new Set(favorites.map((b) => b._id));
+
+  return (
+    <div className={`explore ${darkMode ? "dark" : "light"}`}>
+      {/* HEADER */}
+      <div className="exploreHeader">
+        <h1>📚 Explore Books</h1>
+        <div className="headerBtns">
+          <button
+            className="themeBtn"
+            onClick={() => setDarkMode(!darkMode)}
+          >
+            {darkMode ? "☀ Light Mode" : "🌙 Dark Mode"}
+          </button>
+          <button className="homeBtn" onClick={() => navigate("/")}>
+            🏠 Home
+          </button>
+        </div>
+      </div>
+
+      {/* SEARCH */}
+      <input
+        className="searchBar"
+        type="text"
+        placeholder="🔍 Search books..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
+      {/* CATEGORY */}
+      <div className="categoryBar">
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            className={selectedCategory === cat ? "active" : ""}
+            onClick={() => setSelectedCategory(cat)}
+          >
+            {cat.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
+      {/* BOOK GRID */}
+      <div className="grid">
+        {filteredBooks.map((book) => (
+          <div
+            key={book._id}
+            className="card"
+            onClick={() =>
+              navigate("/book-details", {
+                state: book,
+              })
+            }
+          >
+            <div className="imgBox">
+              <img
+                src={
+                  book.image ||
+                  "https://images.unsplash.com/photo-1544947950-fa07a98d237f"
+                }
+                alt={book.title}
+                onError={(e) => {
+                  e.target.src =
+                    "https://images.unsplash.com/photo-1544947950-fa07a98d237f";
+                }}
+              />
+
+              {/* Favorite Icon */}
+              <div
+                className={`saveIcon ${
+                  favoriteIds.has(book._id) ? "saved" : ""
+                }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  saveBook(book);
+                }}
+              >
+                ♥
+              </div>
+            </div>
+
+            <div className="cardBody">
+              <h3>{book.title}</h3>
+              <p>✍ {book.author}</p>
+              <p>📖 {book.category}</p>
+              <p>⭐ {book.rating || 4.5}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default Explore;
