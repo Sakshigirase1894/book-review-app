@@ -15,32 +15,39 @@ function Explore() {
   );
 
   // Fetch Books
-useEffect(() => {
-fetch("https://book-review-app-1-b9ch.onrender.com/api/books?limit=100")
-   .then((data) => {
-  console.log(data);
 
-  const books = data.books || data;
+  // Fetch Books
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        const response = await fetch(
+          "https://book-review-app-1-b9ch.onrender.com/api/books?limit=100"
+        );
 
-  console.log("Books Count:", books.length);
+        if (!response.ok) {
+          throw new Error("Failed to fetch books");
+        }
 
-  setBooksData(books);
-})
-    .catch((err) => {
-      console.error("Fetch Error:", err);
-    });
-}, []);
+        const data = await response.json();
+        console.log("Books API data:", data);
 
-  // Categories
-  const categories = [
-    "all",
-    ...new Set(
-      booksData
-        .map((book) => book.category)
-        .filter(Boolean)
-    ),
-    "favorites",
-  ];
+        // API array किंवा object मधील books array हाताळतो
+        const books = Array.isArray(data)
+          ? data
+          : Array.isArray(data.books)
+          ? data.books
+          : [];
+
+        console.log("Books Count:", books.length);
+        setBooksData(books);
+      } catch (error) {
+        console.error("Fetch Books Error:", error);
+        setBooksData([]);
+      }
+    };
+
+    fetchBooks();
+  }, []);
 
   // Favorite Save Remove
   const saveBook = (book) => {
