@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Explore.css";
@@ -10,11 +11,14 @@ function Explore() {
   const [search, setSearch] = useState("");
   const [darkMode, setDarkMode] = useState(true);
 
-  const [favorites, setFavorites] = useState(
-    JSON.parse(localStorage.getItem("favorites")) || []
-  );
-
-  // Fetch Books
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("favorites") || "[]");
+      return Array.isArray(saved) ? saved : [];
+    } catch {
+      return [];
+    }
+  });
 
   // Fetch Books
   useEffect(() => {
@@ -29,17 +33,19 @@ function Explore() {
         }
 
         const data = await response.json();
+
         console.log("Books API data:", data);
 
-        // API array किंवा object मधील books array हाताळतो
         const books = Array.isArray(data)
           ? data
           : Array.isArray(data.books)
           ? data.books
+          : Array.isArray(data.data)
+          ? data.data
           : [];
 
-        console.log("Books Count:", books.length);
         setBooksData(books);
+        console.log("Books Count:", books.length);
       } catch (error) {
         console.error("Fetch Books Error:", error);
         setBooksData([]);
@@ -49,22 +55,26 @@ function Explore() {
     fetchBooks();
   }, []);
 
-  // Favorite Save Remove
+  // Categories
+  const categories = [
+    "all",
+    ...new Set(booksData.map((book) => book.category).filter(Boolean)),
+    "favorites",
+  ];
+
+  // Favorite Save / Remove
   const saveBook = (book) => {
     const exists = favorites.some((b) => b._id === book._id);
 
-    let updated;
-    if (exists) {
-      updated = favorites.filter((b) => b._id !== book._id);
-    } else {
-      updated = [...favorites, book];
-    }
+    const updated = exists
+      ? favorites.filter((b) => b._id !== book._id)
+      : [...favorites, book];
 
     setFavorites(updated);
     localStorage.setItem("favorites", JSON.stringify(updated));
   };
 
-  // Filter
+  // Filter Books
   let filteredBooks =
     selectedCategory === "all"
       ? booksData
@@ -74,6 +84,7 @@ function Explore() {
 
   filteredBooks = filteredBooks.filter((book) => {
     const text = search.toLowerCase();
+
     return (
       book.title?.toLowerCase().includes(text) ||
       book.author?.toLowerCase().includes(text) ||
@@ -81,13 +92,13 @@ function Explore() {
     );
   });
 
-  const favoriteIds = new Set(favorites.map((b) => b._id));
+  const favoriteIds = new Set(favorites.map((book) => book._id));
 
   return (
     <div className={`explore ${darkMode ? "dark" : "light"}`}>
-      {/* HEADER */}
       <div className="exploreHeader">
         <h1>📚 Explore Books</h1>
+
         <div className="headerBtns">
           <button
             className="themeBtn"
@@ -95,13 +106,13 @@ function Explore() {
           >
             {darkMode ? "☀ Light Mode" : "🌙 Dark Mode"}
           </button>
+
           <button className="homeBtn" onClick={() => navigate("/")}>
             🏠 Home
           </button>
         </div>
       </div>
 
-      {/* SEARCH */}
       <input
         className="searchBar"
         type="text"
@@ -110,7 +121,6 @@ function Explore() {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      {/* CATEGORY */}
       <div className="categoryBar">
         {categories.map((cat) => (
           <button
@@ -123,7 +133,6 @@ function Explore() {
         ))}
       </div>
 
-      {/* BOOK GRID */}
       <div className="grid">
         {filteredBooks.map((book) => (
           <div
@@ -141,14 +150,13 @@ function Explore() {
                   book.image ||
                   "https://images.unsplash.com/photo-1544947950-fa07a98d237f"
                 }
-                alt={book.title}
+                alt={book.title || "Book cover"}
                 onError={(e) => {
-                  e.target.src =
+                  e.currentTarget.src =
                     "https://images.unsplash.com/photo-1544947950-fa07a98d237f";
                 }}
               />
 
-              {/* Favorite Icon */}
               <div
                 className={`saveIcon ${
                   favoriteIds.has(book._id) ? "saved" : ""
