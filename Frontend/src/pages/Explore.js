@@ -16,8 +16,7 @@ function Explore() {
 
   // Fetch Books
 useEffect(() => {
-  fetch("http://localhost:5000/api/books?limit=100")
-    .then((res) => res.json())
+fetch("https://book-review-app-1-b9ch.onrender.com/api/books?limit=100")
    .then((data) => {
   console.log(data);
 
