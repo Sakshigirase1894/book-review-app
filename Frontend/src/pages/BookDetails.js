@@ -35,32 +35,34 @@ export default function BookDetails() {
   };
 
   // Fetch Reviews
-  const fetchReviews = async () => {
-    if (!book?._id) return;
+  
+const fetchReviews = useCallback(async () => {
+  if (!book?._id) return;
 
-    try {
-      const res = await fetch(`${API_URL}/reviews/${book._id}`);
+  try {
+    const res = await fetch(`${API_URL}/reviews/${book._id}`);
 
-      if (!res.ok) {
-        throw new Error("Failed to fetch reviews");
-      }
-
-      const data = await res.json();
-      setReviews(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Reviews fetch error:", error);
-      setReviews([]);
+    if (!res.ok) {
+      throw new Error("Failed to fetch reviews");
     }
-  };
 
-  useEffect(() => {
-    fetchFavorites();
-  }, []);
+    const data = await res.json();
+    setReviews(Array.isArray(data) ? data : []);
+  } catch (error) {
+    console.error("Reviews fetch error:", error);
+    setReviews([]);
+  }
+}, [book?._id]);
 
-  useEffect(() => {
-    fetchReviews();
-  }, [book?._id]);
+useEffect(() => {
+  fetchFavorites();
+}, []);
 
+useEffect(() => {
+  fetchReviews();
+}, [fetchReviews]);
+
+  
   // Popup Timer
   useEffect(() => {
     const timer = setTimeout(() => {
